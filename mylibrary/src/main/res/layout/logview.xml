@@ -4,20 +4,18 @@
     android:layout_height="match_parent">
 
 
-    <LinearLayout
-        android:orientation="horizontal"
+    <ScrollView
+        android:id="@+id/myscrollview"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-
         <TextView
-            android:gravity="center"
-            android:text="HALLO"
+            android:id="@+id/logs"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom">
         </TextView>
+    </ScrollView>
 
-    </LinearLayout>
+
 
 </LinearLayout>

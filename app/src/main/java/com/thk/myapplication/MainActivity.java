@@ -1,125 +1,81 @@
 package com.thk.myapplication;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
-import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
-import android.view.View;
-import android.widget.EditText;
-import android.widget.TextView;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import com.thk.mylibrary.LogViewer;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity{
 
-    private TextView textView;
-    private EditText editText;
-    private String filterTag="";
-    private String filterOptions = "";
-
-    private Boolean readLogs = true;
+    LogViewer logViewer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        textView = findViewById(R.id.textView);
-        editText = findViewById(R.id.editText);
-
-       Log.v("test","halllllllo");
-
+        Log.d("test","Dies ist ein Test-Log");
+        logViewer = new LogViewer(this); //Jede Activtiy der die Funktionen von LogViewer benötigt muss eine eigene Instanz von LogViewer erstellen
     }
 
-    public void filter(View view) {
-        readLogs = true;
-        filterTag = editText.getEditableText().toString();
-        if(!filterTag.equals("")){
-            filterOptions = ":V *:S";
-        }else{
-            filterOptions = "";
-        }
+
+
+    /**
+     * Möglichkeit 1 für die Einbindung der Library:
+     * Als Icon in der Action Bar, der die LogViewActivity startet oder das PopupWindow erstellt.
+     */
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.appbar, menu);
+        return true;
     }
 
-    private class MyTask extends AsyncTask<Void,StringBuilder,Void>{
-
-        @Override
-        protected Void doInBackground(Void... voids) {
-            while(true) {
-                if (readLogs) {
-                    try {
-
-                        int count = 0;
-                        int pid = android.os.Process.myPid();
-                        String command = "logcat --pid=" + pid + " -b main -v tag "+filterTag+filterOptions;
-                        Process process = Runtime.getRuntime().exec(command);
-                        BufferedReader bufferedReader = new BufferedReader(
-                                new InputStreamReader(process.getInputStream()));
-
-                        StringBuilder log = new StringBuilder();
-                        String line = "";
-
-                        while ((line = bufferedReader.readLine()) != null) {
-                            log.append(++count + ") " + line + "\n");
-                            publishProgress(log);
-
-                        }
-
-                        Thread.sleep(1000);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()){
+            case R.id.logactivity:
+                logViewer.startLogViewActivity();
+                break;
+            case R.id.logpopup:
+                logViewer.startPopupView();
+                break;
+            case R.id.logtoast:
+                logViewer.registerLogAsToast();
+                break;
+            case R.id.lifecycle:
+                logViewer.trackActivityLifecycle(this);
+                break;
+            default: return super.onOptionsItemSelected(item);
         }
-
-        @Override
-        protected void onProgressUpdate(StringBuilder... values) {
-            super.onProgressUpdate(values);
-
-            textView.invalidate();
-            textView.setText(values[0].toString());
-            textView.setMovementMethod(new ScrollingMovementMethod());
-
-        }
+        return false;
     }
 
-    Handler viewHandler = new Handler();
-    Runnable updateView = new Runnable() {
-        @Override
-        public void run() {
+    /**
+     * Logs als Toast-Nachrichten ausgeeben abmelden.
+     */
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        logViewer.unregisterLogAsToast();
+    }
 
-            textView.invalidate();
+    /**
+     * Möglichkeit 2 für die Einbindung der Library:
+     * Der Programmierer entscheidet selbst, wie er die LogViewActivity startet.
+     */
 
+    public void initLogViewer(){
+        logViewer.startLogViewActivity();
+        logViewer.startPopupView();
+        logViewer.trackActivityLifecycle(this);
+        logViewer.registerLogAsToast();
+    }
 
-           /* try {
-                int count=0;
-                int pid = android.os.Process.myPid();
-                String command = "logcat --pid="+pid+" -d -v tag";
-                Process process = Runtime.getRuntime().exec(command);
-                BufferedReader bufferedReader = new BufferedReader(
-                        new InputStreamReader(process.getInputStream()));
-
-                StringBuilder log=new StringBuilder();
-                String line = "";
-                while ((line = bufferedReader.readLine()) != null) {
-                    log.append(++count +") "+line +"\n");
-                }
-                textView.setText(log.toString());
-                textView.setMovementMethod(new ScrollingMovementMethod());
-            }
-            catch (Exception e){
-                e.printStackTrace();
-            }
-
-            Log.v("brt","brrrtttt");*/
-
-            viewHandler.postDelayed(this, 1000);
-        }
-    };
-
+    // -------------------------------------------------------------------------------
 }
